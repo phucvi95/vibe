@@ -58,7 +58,7 @@ function padIndex(i: number): string {
       <h1
         class="font-display text-[2rem] min-[375px]:text-[2.5rem] min-[425px]:text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight text-text-primary -rotate-1 animate-fade-up"
       >
-        vibe<span class="text-accent-coral">.</span>j2team<span class="text-accent-coral">.</span>dev
+        vibe<span class="text-accent-coral">.</span>j2team<span class="text-accent-coral">.</span>org
       </h1>
 
       <!-- Subtitle with coral left border -->
