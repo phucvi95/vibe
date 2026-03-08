@@ -12,6 +12,7 @@ declare module 'vue-router' {
 const HomePage = () => import('@/views/HomePage.vue')
 const ContentPolicy = () => import('@/views/ContentPolicy.vue')
 const LeaderboardPage = () => import('@/views/LeaderboardPage.vue')
+const BookmarksPage = () => import('@/views/BookmarksPage.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const pageRoutes: RouteRecordRaw[] = pages.map((page) => {
@@ -53,6 +54,15 @@ const router = createRouter({
       meta: {
         title: 'Bảng xếp hạng tác giả - vibe.j2team.org',
         description: 'Bảng xếp hạng các tác giả đóng góp nhiều ứng dụng nhất trên vibe.j2team.org.',
+      },
+    },
+    {
+      path: '/bookmarks',
+      name: 'bookmarks',
+      component: BookmarksPage,
+      meta: {
+        title: 'Yêu thích - vibe.j2team.org',
+        description: 'Danh sách các ứng dụng yêu thích của bạn.',
       },
     },
     {
