@@ -1,21 +1,56 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Icon } from '@iconify/vue'
 import { REPO_URL } from '@/data/constants'
 
 const CACHE_KEY = 'vibe-star-count'
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const STAR_COUNT = 12
 
 const stars = ref(0)
 const loaded = ref(false)
 const failed = ref(false)
+const showParticles = ref(false)
+const inView = ref(true)
+const sectionRef = ref<HTMLElement>()
+
+// Pre-compute trig values for particles
+const particles = Array.from({ length: STAR_COUNT }, () => {
+  const angle = Math.random() * 360
+  const distance = 30 + Math.random() * 60
+  const rad = (angle * Math.PI) / 180
+  return {
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: 8 + Math.random() * 12,
+    delay: Math.random() * 0.6,
+    duration: 0.8 + Math.random() * 0.6,
+    flyX: `${Math.cos(rad) * distance}px`,
+    flyY: `${Math.sin(rad) * distance}px`,
+  }
+})
 
 const goal = computed(() => Math.ceil((stars.value + 1) / 100) * 100)
 const progress = computed(() => Math.min((stars.value / goal.value) * 100, 100))
 const prevMilestone = computed(() => goal.value - 100)
 
+// Pause infinite animations when out of viewport
+let observer: IntersectionObserver | undefined
+
+function setupObserver() {
+  if (!sectionRef.value) return
+  observer = new IntersectionObserver(
+    ([entry]) => {
+      inView.value = entry.isIntersecting
+    },
+    { threshold: 0 },
+  )
+  observer.observe(sectionRef.value)
+}
+
+onBeforeUnmount(() => observer?.disconnect())
+
 async function fetchStars() {
-  // Check sessionStorage cache
   const cached = sessionStorage.getItem(CACHE_KEY)
   if (cached) {
     try {
@@ -46,20 +81,65 @@ async function fetchStars() {
   }
 }
 
-onMounted(fetchStars)
+onMounted(async () => {
+  await fetchStars()
+  if (loaded.value) {
+    // Wait a tick for the section to render before observing
+    requestAnimationFrame(() => {
+      setupObserver()
+      showParticles.value = true
+      setTimeout(() => {
+        showParticles.value = false
+      }, 2000)
+    })
+  }
+})
 </script>
 
 <template>
   <section
     v-if="loaded && !failed"
+    ref="sectionRef"
     class="max-w-5xl mx-auto px-4 sm:px-6 -mt-4 mb-8 animate-fade-up"
   >
     <a
       :href="REPO_URL"
       target="_blank"
       rel="noopener noreferrer nofollow"
-      class="group block border border-border-default bg-bg-surface p-5 sm:p-6 transition-all duration-300 hover:border-accent-coral/50"
+      class="group relative block border border-border-default bg-bg-surface p-5 sm:p-6 transition-all duration-300 hover:border-accent-coral/50 overflow-hidden"
     >
+      <!-- Star particles on load -->
+      <div v-if="showParticles" class="pointer-events-none absolute inset-0" aria-hidden="true">
+        <!-- Shared symbol definition -->
+        <svg class="absolute w-0 h-0">
+          <defs>
+            <symbol id="star-icon" viewBox="0 0 24 24">
+              <path
+                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              />
+            </symbol>
+          </defs>
+        </svg>
+        <svg
+          v-for="(p, i) in particles"
+          :key="i"
+          class="star-particle absolute text-accent-amber"
+          fill="currentColor"
+          :style="{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            '--fly-x': p.flyX,
+            '--fly-y': p.flyY,
+          }"
+        >
+          <use href="#star-icon" />
+        </svg>
+      </div>
+
       <!-- Header row -->
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div class="flex items-center gap-2.5">
@@ -95,6 +175,7 @@ onMounted(fetchStars)
           <!-- Filled bar -->
           <div
             class="progress-fill absolute inset-y-0 left-0 rounded-full"
+            :class="{ 'is-paused': !inView }"
             :style="{ width: `${progress}%` }"
           >
             <!-- Animated stripes -->
@@ -106,6 +187,7 @@ onMounted(fetchStars)
         <!-- Glow dot at the tip (outside overflow-hidden so glow is visible) -->
         <div
           class="progress-tip absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white transition-all duration-1000 ease-out"
+          :class="{ 'is-paused': !inView }"
           :style="{ left: `calc(${progress}% - 10px)` }"
         />
       </div>
@@ -167,6 +249,37 @@ onMounted(fetchStars)
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+/* Pause infinite animations when out of viewport */
+.is-paused .progress-stripes,
+.is-paused .progress-shimmer {
+  animation-play-state: paused;
+}
+
+.progress-tip.is-paused {
+  animation-play-state: paused;
+}
+
+/* Star particles burst on load */
+.star-particle {
+  animation: star-fly ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes star-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.3) rotate(180deg);
   }
 }
 
