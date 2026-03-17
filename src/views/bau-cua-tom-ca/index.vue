@@ -4,13 +4,6 @@ import { useLocalStorage } from '@vueuse/core'
 import { Icon } from '@iconify/vue'
 import { RouterLink } from 'vue-router'
 
-import bauImg from './bau.png'
-import cuaImg from './cua.png'
-import tomImg from './tom.png'
-import caImg from './ca.png'
-import gaImg from './ga.png'
-import naiImg from './nai.png'
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 type DiceFace = 'bầu' | 'cua' | 'tôm' | 'cá' | 'gà' | 'nai'
 type DiceIndex = 1 | 2 | 3 | 4 | 5 | 6
@@ -31,12 +24,12 @@ const DICE_MAP: Record<DiceIndex, DiceFace> = {
 }
 
 const SYMBOL_IMAGES: Record<DiceFace, string> = {
-  bầu: bauImg,
-  cua: cuaImg,
-  tôm: tomImg,
-  cá: caImg,
-  gà: gaImg,
-  nai: naiImg,
+  bầu: '/images/bau-cua-tom-ca/bau.webp',
+  cua: '/images/bau-cua-tom-ca/cua.webp',
+  tôm: '/images/bau-cua-tom-ca/tom.webp',
+  cá: '/images/bau-cua-tom-ca/ca.webp',
+  gà: '/images/bau-cua-tom-ca/ga.webp',
+  nai: '/images/bau-cua-tom-ca/nai.webp',
 }
 
 const SYMBOL_EMOJIS: Record<DiceFace, string> = {
