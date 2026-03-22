@@ -68,7 +68,17 @@ function* bubbleSortGen(arr: number[]): Generator<SortStep> {
     sorted.add(n - 1 - i)
     if (!swapped) {
       for (let k = 0; k <= n - 2 - i; k++) sorted.add(k)
-      yield ms(a, [], [], sorted, undefined, 'Không có hoán đổi → mảng đã sắp xếp sớm!', 6, cmp, swp)
+      yield ms(
+        a,
+        [],
+        [],
+        sorted,
+        undefined,
+        'Không có hoán đổi → mảng đã sắp xếp sớm!',
+        6,
+        cmp,
+        swp,
+      )
       break
     }
   }
@@ -96,7 +106,17 @@ function* selectionSortGen(arr: number[]): Generator<SortStep> {
 
   for (let i = 0; i < n - 1; i++) {
     let minIdx = i
-    yield ms(a, [i], [], sorted, undefined, `Tìm phần tử nhỏ nhất trong đoạn [${i}..${n - 1}]`, 1, cmp, swp)
+    yield ms(
+      a,
+      [i],
+      [],
+      sorted,
+      undefined,
+      `Tìm phần tử nhỏ nhất trong đoạn [${i}..${n - 1}]`,
+      1,
+      cmp,
+      swp,
+    )
     for (let j = i + 1; j < n; j++) {
       cmp++
       yield ms(
@@ -112,7 +132,17 @@ function* selectionSortGen(arr: number[]): Generator<SortStep> {
       )
       if (a[j] < a[minIdx]) {
         minIdx = j
-        yield ms(a, [minIdx], [], sorted, undefined, `Tìm thấy min mới: ${a[minIdx]} tại vị trí ${minIdx}`, 4, cmp, swp)
+        yield ms(
+          a,
+          [minIdx],
+          [],
+          sorted,
+          undefined,
+          `Tìm thấy min mới: ${a[minIdx]} tại vị trí ${minIdx}`,
+          4,
+          cmp,
+          swp,
+        )
       }
     }
     if (minIdx !== i) {
@@ -160,10 +190,30 @@ function* insertionSortGen(arr: number[]): Generator<SortStep> {
   for (let i = 1; i < n; i++) {
     const key = a[i]
     let j = i - 1
-    yield ms(a, [i], [], sorted, undefined, `Chèn key=${key} vào vị trí đúng trong [0..${i}]`, 1, cmp, swp)
+    yield ms(
+      a,
+      [i],
+      [],
+      sorted,
+      undefined,
+      `Chèn key=${key} vào vị trí đúng trong [0..${i}]`,
+      1,
+      cmp,
+      swp,
+    )
     while (j >= 0) {
       cmp++
-      yield ms(a, [j, j + 1], [], sorted, undefined, `So sánh a[${j}]=${a[j]} với key=${key}`, 3, cmp, swp)
+      yield ms(
+        a,
+        [j, j + 1],
+        [],
+        sorted,
+        undefined,
+        `So sánh a[${j}]=${a[j]} với key=${key}`,
+        3,
+        cmp,
+        swp,
+      )
       if (a[j] > key) {
         a[j + 1] = a[j]
         swp++
@@ -308,7 +358,17 @@ function* quickSortGen(arr: number[], pivotStrategy: PivotStrategy = 'last'): Ge
     if (pivotIdx !== hi) {
       ;[a[pivotIdx], a[hi]] = [a[hi], a[pivotIdx]]
       swp++
-      yield ms(a, [], [pivotIdx, hi], sorted, hi, `Di chuyển pivot ${a[hi]} về cuối đoạn`, 2, cmp, swp)
+      yield ms(
+        a,
+        [],
+        [pivotIdx, hi],
+        sorted,
+        hi,
+        `Di chuyển pivot ${a[hi]} về cuối đoạn`,
+        2,
+        cmp,
+        swp,
+      )
     }
 
     const pivot = a[hi]
@@ -317,13 +377,33 @@ function* quickSortGen(arr: number[], pivotStrategy: PivotStrategy = 'last'): Ge
     let i = lo - 1
     for (let j = lo; j < hi; j++) {
       cmp++
-      yield ms(a, [j, hi], [], sorted, hi, `So sánh a[${j}]=${a[j]} với pivot=${pivot}`, 5, cmp, swp)
+      yield ms(
+        a,
+        [j, hi],
+        [],
+        sorted,
+        hi,
+        `So sánh a[${j}]=${a[j]} với pivot=${pivot}`,
+        5,
+        cmp,
+        swp,
+      )
       if (a[j] <= pivot) {
         i++
         if (i !== j) {
           ;[a[i], a[j]] = [a[j], a[i]]
           swp++
-          yield ms(a, [], [i, j], sorted, hi, `a[${j}] ≤ pivot → hoán đổi a[${i}] và a[${j}]`, 7, cmp, swp)
+          yield ms(
+            a,
+            [],
+            [i, j],
+            sorted,
+            hi,
+            `a[${j}] ≤ pivot → hoán đổi a[${i}] và a[${j}]`,
+            7,
+            cmp,
+            swp,
+          )
         }
       }
     }
@@ -332,7 +412,17 @@ function* quickSortGen(arr: number[], pivotStrategy: PivotStrategy = 'last'): Ge
     swp++
     const p = i + 1
     sorted.add(p)
-    yield ms(a, [], [p, hi], sorted, undefined, `Đặt pivot ${pivot} vào đúng vị trí: ${p}`, 9, cmp, swp)
+    yield ms(
+      a,
+      [],
+      [p, hi],
+      sorted,
+      undefined,
+      `Đặt pivot ${pivot} vào đúng vị trí: ${p}`,
+      9,
+      cmp,
+      swp,
+    )
 
     if (p - 1 > lo) stack.push([lo, p - 1])
     else if (p - 1 === lo) sorted.add(lo)
@@ -368,18 +458,48 @@ function* heapSortGen(arr: number[]): Generator<SortStep> {
 
     if (l < size) {
       cmp++
-      yield ms(a, [l, largest], [], sorted, undefined, `So sánh con trái a[${l}]=${a[l]} với a[${largest}]=${a[largest]}`, 3, cmp, swp)
+      yield ms(
+        a,
+        [l, largest],
+        [],
+        sorted,
+        undefined,
+        `So sánh con trái a[${l}]=${a[l]} với a[${largest}]=${a[largest]}`,
+        3,
+        cmp,
+        swp,
+      )
       if (a[l] > a[largest]) largest = l
     }
     if (r < size) {
       cmp++
-      yield ms(a, [r, largest], [], sorted, undefined, `So sánh con phải a[${r}]=${a[r]} với a[${largest}]=${a[largest]}`, 5, cmp, swp)
+      yield ms(
+        a,
+        [r, largest],
+        [],
+        sorted,
+        undefined,
+        `So sánh con phải a[${r}]=${a[r]} với a[${largest}]=${a[largest]}`,
+        5,
+        cmp,
+        swp,
+      )
       if (a[r] > a[largest]) largest = r
     }
     if (largest !== root) {
       ;[a[root], a[largest]] = [a[largest], a[root]]
       swp++
-      yield ms(a, [], [root, largest], sorted, undefined, `Hoán đổi a[${root}]=${a[largest]} ↔ a[${largest}]=${a[root]}`, 8, cmp, swp)
+      yield ms(
+        a,
+        [],
+        [root, largest],
+        sorted,
+        undefined,
+        `Hoán đổi a[${root}]=${a[largest]} ↔ a[${largest}]=${a[root]}`,
+        8,
+        cmp,
+        swp,
+      )
       yield* heapify(size, largest)
     }
   }
@@ -388,13 +508,33 @@ function* heapSortGen(arr: number[]): Generator<SortStep> {
   for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
     yield* heapify(n, i)
   }
-  yield ms(a, [], [], sorted, undefined, 'Max-Heap xong, bắt đầu trích xuất phần tử lớn nhất', 10, cmp, swp)
+  yield ms(
+    a,
+    [],
+    [],
+    sorted,
+    undefined,
+    'Max-Heap xong, bắt đầu trích xuất phần tử lớn nhất',
+    10,
+    cmp,
+    swp,
+  )
 
   for (let i = n - 1; i > 0; i--) {
     ;[a[0], a[i]] = [a[i], a[0]]
     swp++
     sorted.add(i)
-    yield ms(a, [], [0, i], sorted, undefined, `Đưa phần tử lớn nhất ${a[i]} về vị trí cuối: ${i}`, 12, cmp, swp)
+    yield ms(
+      a,
+      [],
+      [0, i],
+      sorted,
+      undefined,
+      `Đưa phần tử lớn nhất ${a[i]} về vị trí cuối: ${i}`,
+      12,
+      cmp,
+      swp,
+    )
     yield* heapify(i, 0)
   }
   sorted.add(0)
@@ -427,11 +567,31 @@ function* shellSortGen(arr: number[]): Generator<SortStep> {
       yield ms(a, [i], [], sorted, undefined, `Chèn a[${i}]=${temp} với gap=${gap}`, 3, cmp, swp)
       while (j >= gap) {
         cmp++
-        yield ms(a, [j - gap, j], [], sorted, undefined, `So sánh a[${j - gap}]=${a[j - gap]} với temp=${temp}`, 5, cmp, swp)
+        yield ms(
+          a,
+          [j - gap, j],
+          [],
+          sorted,
+          undefined,
+          `So sánh a[${j - gap}]=${a[j - gap]} với temp=${temp}`,
+          5,
+          cmp,
+          swp,
+        )
         if (a[j - gap] > temp) {
           a[j] = a[j - gap]
           swp++
-          yield ms(a, [], [j, j - gap], sorted, undefined, `${a[j]} > ${temp} → dịch sang phải`, 6, cmp, swp)
+          yield ms(
+            a,
+            [],
+            [j, j - gap],
+            sorted,
+            undefined,
+            `${a[j]} > ${temp} → dịch sang phải`,
+            6,
+            cmp,
+            swp,
+          )
           j -= gap
         } else break
       }
@@ -456,17 +616,27 @@ function* shellSortGen(arr: number[]): Generator<SortStep> {
 function* countingSortGen(arr: number[]): Generator<SortStep> {
   const a = [...arr]
   const n = a.length
-  let cmp = 0,
-    swp = 0
+  const cmp = 0
+  let swp = 0
   const sorted = new Set<number>()
 
   const max = Math.max(...a)
-  const count = new Array(max + 1).fill(0)
+  const count = Array.from({ length: max + 1 }, () => 0)
   yield ms(a, [], [], sorted, undefined, `Tạo mảng đếm kích thước ${max + 1}`, 1, cmp, swp)
 
   for (let i = 0; i < n; i++) {
     count[a[i]]++
-    yield ms(a, [i], [], sorted, undefined, `Đếm a[${i}]=${a[i]} → count[${a[i]}]=${count[a[i]]}`, 3, cmp, swp)
+    yield ms(
+      a,
+      [i],
+      [],
+      sorted,
+      undefined,
+      `Đếm a[${i}]=${a[i]} → count[${a[i]}]=${count[a[i]]}`,
+      3,
+      cmp,
+      swp,
+    )
   }
 
   for (let i = 1; i <= max; i++) {
@@ -474,7 +644,7 @@ function* countingSortGen(arr: number[]): Generator<SortStep> {
     yield ms(a, [], [], sorted, undefined, `Tích lũy: count[${i}]=${count[i]}`, 6, cmp, swp)
   }
 
-  const output = new Array(n).fill(0)
+  const output = Array.from({ length: n }, () => 0)
   const temp = [...a]
   for (let i = n - 1; i >= 0; i--) {
     const pos = count[temp[i]] - 1
@@ -519,18 +689,38 @@ function* radixSortGen(arr: number[]): Generator<SortStep> {
 
   for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10, digitIdx++) {
     const digitName = digitNames[digitIdx] ?? `10^${digitIdx}`
-    yield ms(a, [], [], sorted, undefined, `Sắp xếp theo hàng ${digitName} (exp=${exp})`, 1, cmp, swp)
+    yield ms(
+      a,
+      [],
+      [],
+      sorted,
+      undefined,
+      `Sắp xếp theo hàng ${digitName} (exp=${exp})`,
+      1,
+      cmp,
+      swp,
+    )
 
-    const count = new Array(10).fill(0)
+    const count = Array.from({ length: 10 }, () => 0)
     for (let i = 0; i < n; i++) {
       const d = Math.floor(a[i] / exp) % 10
       count[d]++
       cmp++
-      yield ms(a, [i], [], sorted, undefined, `Chữ số hàng ${digitName} của ${a[i]} là ${d}`, 3, cmp, swp)
+      yield ms(
+        a,
+        [i],
+        [],
+        sorted,
+        undefined,
+        `Chữ số hàng ${digitName} của ${a[i]} là ${d}`,
+        3,
+        cmp,
+        swp,
+      )
     }
     for (let i = 1; i < 10; i++) count[i] += count[i - 1]
 
-    const output = new Array(n)
+    const output = Array.from<number>({ length: n })
     for (let i = n - 1; i >= 0; i--) {
       const d = Math.floor(a[i] / exp) % 10
       output[count[d] - 1] = a[i]
@@ -581,7 +771,17 @@ function* bogoSortGen(arr: number[]): Generator<SortStep> {
   let attempts = 0
   while (!isSorted() && attempts < MAX) {
     attempts++
-    yield ms(a, [], [], [], undefined, `Lần ${attempts}: chưa đúng thứ tự 😅 → xáo trộn ngẫu nhiên...`, 1, cmp, swp)
+    yield ms(
+      a,
+      [],
+      [],
+      [],
+      undefined,
+      `Lần ${attempts}: chưa đúng thứ tự 😅 → xáo trộn ngẫu nhiên...`,
+      1,
+      cmp,
+      swp,
+    )
     shuffle()
     yield ms(a, [], [], [], undefined, `Sau khi xáo lần ${attempts}...`, 2, cmp, swp)
   }
@@ -599,7 +799,17 @@ function* bogoSortGen(arr: number[]): Generator<SortStep> {
       swp,
     )
   } else {
-    yield ms(a, [], [], [], undefined, `⚠️ Đã thử ${MAX} lần mà chưa xong. Bogo Sort đầu hàng! 💀`, -1, cmp, swp)
+    yield ms(
+      a,
+      [],
+      [],
+      [],
+      undefined,
+      `⚠️ Đã thử ${MAX} lần mà chưa xong. Bogo Sort đầu hàng! 💀`,
+      -1,
+      cmp,
+      swp,
+    )
   }
 }
 
@@ -611,7 +821,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n)', average: 'O(n²)', worst: 'O(n²)' },
     spaceComplexity: 'O(1)',
     stable: true,
-    description: 'Liên tục so sánh và hoán đổi các cặp phần tử kề nhau. Phần tử lớn nhất "nổi bọt" về cuối mảng sau mỗi lượt.',
+    description:
+      'Liên tục so sánh và hoán đổi các cặp phần tử kề nhau. Phần tử lớn nhất "nổi bọt" về cuối mảng sau mỗi lượt.',
     pseudoCode: [
       'for i = 0 to n−2:',
       '  swapped = false',
@@ -629,7 +840,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n²)', average: 'O(n²)', worst: 'O(n²)' },
     spaceComplexity: 'O(1)',
     stable: false,
-    description: 'Mỗi lượt tìm phần tử nhỏ nhất trong phần chưa sắp xếp và đưa về đầu. Tổng số hoán đổi rất ít.',
+    description:
+      'Mỗi lượt tìm phần tử nhỏ nhất trong phần chưa sắp xếp và đưa về đầu. Tổng số hoán đổi rất ít.',
     pseudoCode: [
       'for i = 0 to n−2:',
       '  min_idx = i',
@@ -647,7 +859,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n)', average: 'O(n²)', worst: 'O(n²)' },
     spaceComplexity: 'O(1)',
     stable: true,
-    description: 'Như sắp xếp bài tú lơ khơ — lấy từng phần tử và chèn vào đúng vị trí trong phần đã sắp xếp.',
+    description:
+      'Như sắp xếp bài tú lơ khơ — lấy từng phần tử và chèn vào đúng vị trí trong phần đã sắp xếp.',
     pseudoCode: [
       'for i = 1 to n−1:',
       '  key = a[i]',
@@ -665,7 +878,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n log n)' },
     spaceComplexity: 'O(n)',
     stable: true,
-    description: 'Chia mảng thành nửa, sắp xếp từng nửa rồi gộp lại. Hiệu quả và ổn định, dùng trong Java/Python.',
+    description:
+      'Chia mảng thành nửa, sắp xếp từng nửa rồi gộp lại. Hiệu quả và ổn định, dùng trong Java/Python.',
     pseudoCode: [
       'mergeSort(lo, hi):',
       '  if lo ≥ hi: return',
@@ -683,7 +897,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n²)' },
     spaceComplexity: 'O(log n)',
     stable: false,
-    description: 'Chọn pivot, phân hoạch mảng thành hai phần (nhỏ hơn và lớn hơn pivot), rồi đệ quy. Nhanh trong thực tế.',
+    description:
+      'Chọn pivot, phân hoạch mảng thành hai phần (nhỏ hơn và lớn hơn pivot), rồi đệ quy. Nhanh trong thực tế.',
     pseudoCode: [
       'quickSort(lo, hi):',
       '  pivot = a[hi]',
@@ -705,7 +920,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n log n)' },
     spaceComplexity: 'O(1)',
     stable: false,
-    description: 'Xây dựng Max-Heap từ mảng, sau đó liên tục trích xuất phần tử lớn nhất. Đảm bảo O(n log n) mọi trường hợp.',
+    description:
+      'Xây dựng Max-Heap từ mảng, sau đó liên tục trích xuất phần tử lớn nhất. Đảm bảo O(n log n) mọi trường hợp.',
     pseudoCode: [
       '// Xây dựng Max-Heap',
       'for i = n/2−1 to 0:',
@@ -727,7 +943,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n log n)', average: 'O(n log²n)', worst: 'O(n²)' },
     spaceComplexity: 'O(1)',
     stable: false,
-    description: 'Tổng quát hóa Insertion Sort — so sánh các phần tử cách nhau "gap" khoảng, giảm dần gap về 1.',
+    description:
+      'Tổng quát hóa Insertion Sort — so sánh các phần tử cách nhau "gap" khoảng, giảm dần gap về 1.',
     pseudoCode: [
       'gap = n / 2',
       'while gap > 0:',
@@ -747,7 +964,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n+k)', average: 'O(n+k)', worst: 'O(n+k)' },
     spaceComplexity: 'O(k)',
     stable: true,
-    description: 'Đếm số lần xuất hiện của từng giá trị, sau đó tái tạo mảng. Rất nhanh khi k (giá trị max) nhỏ.',
+    description:
+      'Đếm số lần xuất hiện của từng giá trị, sau đó tái tạo mảng. Rất nhanh khi k (giá trị max) nhỏ.',
     pseudoCode: [
       'count[0..max] = 0',
       'for i = 0 to n−1:',
@@ -768,7 +986,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(d·n)', average: 'O(d·n)', worst: 'O(d·n)' },
     spaceComplexity: 'O(n+k)',
     stable: true,
-    description: 'Sắp xếp theo từng chữ số từ thấp đến cao (LSD). Mỗi bước dùng Counting Sort. Hiệu quả cho số nguyên.',
+    description:
+      'Sắp xếp theo từng chữ số từ thấp đến cao (LSD). Mỗi bước dùng Counting Sort. Hiệu quả cho số nguyên.',
     pseudoCode: [
       'for exp = 1, 10, 100, ...:',
       '  // Counting Sort theo chữ số exp',
@@ -788,7 +1007,8 @@ export const algorithms: AlgorithmDef[] = [
     timeComplexity: { best: 'O(n)', average: 'O((n+1)!)', worst: '∞' },
     spaceComplexity: 'O(1)',
     stable: false,
-    description: 'Xáo trộn ngẫu nhiên cho đến khi mảng được sắp xếp. Hoàn toàn vô dụng nhưng rất vui! (Giới hạn 8 phần tử)',
+    description:
+      'Xáo trộn ngẫu nhiên cho đến khi mảng được sắp xếp. Hoàn toàn vô dụng nhưng rất vui! (Giới hạn 8 phần tử)',
     pseudoCode: [
       'while not sorted(a):',
       '  shuffle(a)  // xáo ngẫu nhiên',
