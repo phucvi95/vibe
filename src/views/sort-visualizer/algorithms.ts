@@ -47,9 +47,9 @@ function* bubbleSortGen(arr: number[]): Generator<SortStep> {
         cmp,
         swp,
       )
-      if (a[j] > a[j + 1]) {
+      if ((a[j] ?? 0) > (a[j + 1] ?? 0)) {
         const [from, to] = [a[j], a[j + 1]]
-        ;[a[j], a[j + 1]] = [a[j + 1], a[j]]
+        ;[a[j], a[j + 1]] = [a[j + 1]!, a[j]!]
         swp++
         swapped = true
         yield ms(
@@ -130,7 +130,7 @@ function* selectionSortGen(arr: number[]): Generator<SortStep> {
         cmp,
         swp,
       )
-      if (a[j] < a[minIdx]) {
+      if ((a[j] ?? 0) < (a[minIdx] ?? 0)) {
         minIdx = j
         yield ms(
           a,
@@ -147,7 +147,7 @@ function* selectionSortGen(arr: number[]): Generator<SortStep> {
     }
     if (minIdx !== i) {
       const [from, to] = [a[i], a[minIdx]]
-      ;[a[i], a[minIdx]] = [a[minIdx], a[i]]
+      ;[a[i], a[minIdx]] = [a[minIdx]!, a[i]!]
       swp++
       yield ms(
         a,
@@ -188,7 +188,7 @@ function* insertionSortGen(arr: number[]): Generator<SortStep> {
     swp = 0
 
   for (let i = 1; i < n; i++) {
-    const key = a[i]
+    const key = a[i]!
     let j = i - 1
     yield ms(
       a,
@@ -214,8 +214,8 @@ function* insertionSortGen(arr: number[]): Generator<SortStep> {
         cmp,
         swp,
       )
-      if (a[j] > key) {
-        a[j + 1] = a[j]
+      if ((a[j] ?? 0) > key) {
+        a[j + 1] = a[j]!
         swp++
         yield ms(
           a,
@@ -231,7 +231,7 @@ function* insertionSortGen(arr: number[]): Generator<SortStep> {
         j--
       } else break
     }
-    a[j + 1] = key
+    a[j + 1] = key as number
     sorted.add(i)
     yield ms(a, [], [], sorted, undefined, `Đặt key=${key} vào vị trí ${j + 1}`, 6, cmp, swp)
   }
@@ -293,21 +293,21 @@ function* mergeSortGen(arr: number[]): Generator<SortStep> {
           cmp,
           swp,
         )
-        if (left[i] <= right[j]) {
-          a[k] = left[i++]
+        if ((left[i] ?? 0) <= (right[j] ?? 0)) {
+          a[k] = left[i++]!
         } else {
-          a[k] = right[j++]
+          a[k] = right[j++]!
         }
         swp++
         yield ms(a, [], [k], sorted, undefined, `Đặt ${a[k]} vào vị trí ${k}`, 5, cmp, swp)
         k++
       }
       while (i < left.length) {
-        a[k++] = left[i++]
+        a[k++] = left[i++]!
         swp++
       }
       while (j < right.length) {
-        a[k++] = right[j++]
+        a[k++] = right[j++]!
         swp++
       }
 
@@ -351,12 +351,12 @@ function* quickSortGen(arr: number[], pivotStrategy: PivotStrategy = 'last'): Ge
     else if (pivotStrategy === 'random') pivotIdx = lo + Math.floor(Math.random() * (hi - lo + 1))
     else if (pivotStrategy === 'median') {
       const mid = Math.floor((lo + hi) / 2)
-      const vals = [lo, mid, hi].sort((x, y) => a[x] - a[y])
-      pivotIdx = vals[1]
+      const vals = [lo, mid, hi].sort((x, y) => (a[x] ?? 0) - (a[y] ?? 0))
+      pivotIdx = vals[1]!
     } else pivotIdx = hi
 
     if (pivotIdx !== hi) {
-      ;[a[pivotIdx], a[hi]] = [a[hi], a[pivotIdx]]
+      ;[a[pivotIdx], a[hi]] = [a[hi]!, a[pivotIdx]!]
       swp++
       yield ms(
         a,
@@ -388,10 +388,10 @@ function* quickSortGen(arr: number[], pivotStrategy: PivotStrategy = 'last'): Ge
         cmp,
         swp,
       )
-      if (a[j] <= pivot) {
+      if ((a[j] ?? 0) <= (pivot ?? 0)) {
         i++
         if (i !== j) {
-          ;[a[i], a[j]] = [a[j], a[i]]
+          ;[a[i], a[j]] = [a[j]!, a[i]!]
           swp++
           yield ms(
             a,
@@ -408,7 +408,7 @@ function* quickSortGen(arr: number[], pivotStrategy: PivotStrategy = 'last'): Ge
       }
     }
 
-    ;[a[i + 1], a[hi]] = [a[hi], a[i + 1]]
+    ;[a[i + 1], a[hi]] = [a[hi]!, a[i + 1]!]
     swp++
     const p = i + 1
     sorted.add(p)
@@ -469,7 +469,7 @@ function* heapSortGen(arr: number[]): Generator<SortStep> {
         cmp,
         swp,
       )
-      if (a[l] > a[largest]) largest = l
+      if ((a[l] ?? 0) > (a[largest] ?? 0)) largest = l
     }
     if (r < size) {
       cmp++
@@ -484,10 +484,10 @@ function* heapSortGen(arr: number[]): Generator<SortStep> {
         cmp,
         swp,
       )
-      if (a[r] > a[largest]) largest = r
+      if ((a[r] ?? 0) > (a[largest] ?? 0)) largest = r
     }
     if (largest !== root) {
-      ;[a[root], a[largest]] = [a[largest], a[root]]
+      ;[a[root], a[largest]] = [a[largest]!, a[root]!]
       swp++
       yield ms(
         a,
@@ -521,7 +521,7 @@ function* heapSortGen(arr: number[]): Generator<SortStep> {
   )
 
   for (let i = n - 1; i > 0; i--) {
-    ;[a[0], a[i]] = [a[i], a[0]]
+    ;[a[0], a[i]] = [a[i]!, a[0]!]
     swp++
     sorted.add(i)
     yield ms(
@@ -562,7 +562,7 @@ function* shellSortGen(arr: number[]): Generator<SortStep> {
   for (let gap = Math.floor(n / 2); gap > 0; gap = Math.floor(gap / 2)) {
     yield ms(a, [], [], sorted, undefined, `Khoảng cách gap = ${gap}`, 1, cmp, swp)
     for (let i = gap; i < n; i++) {
-      const temp = a[i]
+      const temp = a[i]!
       let j = i
       yield ms(a, [i], [], sorted, undefined, `Chèn a[${i}]=${temp} với gap=${gap}`, 3, cmp, swp)
       while (j >= gap) {
@@ -578,8 +578,8 @@ function* shellSortGen(arr: number[]): Generator<SortStep> {
           cmp,
           swp,
         )
-        if (a[j - gap] > temp) {
-          a[j] = a[j - gap]
+        if ((a[j - gap] ?? 0) > temp) {
+          a[j] = a[j - gap]!
           swp++
           yield ms(
             a,
@@ -595,7 +595,7 @@ function* shellSortGen(arr: number[]): Generator<SortStep> {
           j -= gap
         } else break
       }
-      a[j] = temp
+      a[j] = temp as number
       yield ms(a, [], [], sorted, undefined, `Đặt ${temp} vào vị trí ${j}`, 8, cmp, swp)
     }
   }
@@ -625,14 +625,14 @@ function* countingSortGen(arr: number[]): Generator<SortStep> {
   yield ms(a, [], [], sorted, undefined, `Tạo mảng đếm kích thước ${max + 1}`, 1, cmp, swp)
 
   for (let i = 0; i < n; i++) {
-    count[a[i]]++
+    count[a[i]!]!++
     yield ms(
       a,
       [i],
       [],
       sorted,
       undefined,
-      `Đếm a[${i}]=${a[i]} → count[${a[i]}]=${count[a[i]]}`,
+      `Đếm a[${i}]=${a[i]} → count[${a[i]}]=${count[a[i]!]}`,
       3,
       cmp,
       swp,
@@ -640,16 +640,16 @@ function* countingSortGen(arr: number[]): Generator<SortStep> {
   }
 
   for (let i = 1; i <= max; i++) {
-    count[i] += count[i - 1]
+    count[i]! += count[i - 1]!
     yield ms(a, [], [], sorted, undefined, `Tích lũy: count[${i}]=${count[i]}`, 6, cmp, swp)
   }
 
   const output = Array.from({ length: n }, () => 0)
   const temp = [...a]
   for (let i = n - 1; i >= 0; i--) {
-    const pos = count[temp[i]] - 1
-    output[pos] = temp[i]
-    count[temp[i]]--
+    const pos = count[temp[i]!]! - 1
+    output[pos] = temp[i]!
+    count[temp[i]!]!--
     swp++
     const display = [...a]
     output.forEach((v, idx) => {
@@ -659,7 +659,7 @@ function* countingSortGen(arr: number[]): Generator<SortStep> {
   }
 
   for (let i = 0; i < n; i++) {
-    a[i] = output[i]
+    a[i] = output[i]!
     sorted.add(i)
   }
   yield ms(
@@ -703,8 +703,8 @@ function* radixSortGen(arr: number[]): Generator<SortStep> {
 
     const count = Array.from({ length: 10 }, () => 0)
     for (let i = 0; i < n; i++) {
-      const d = Math.floor(a[i] / exp) % 10
-      count[d]++
+      const d = Math.floor((a[i] ?? 0) / exp) % 10
+      count[d]!++
       cmp++
       yield ms(
         a,
@@ -718,16 +718,16 @@ function* radixSortGen(arr: number[]): Generator<SortStep> {
         swp,
       )
     }
-    for (let i = 1; i < 10; i++) count[i] += count[i - 1]
+    for (let i = 1; i < 10; i++) count[i]! += count[i - 1]!
 
-    const output = Array.from<number>({ length: n })
+    const output = Array.from({ length: n }, () => 0)
     for (let i = n - 1; i >= 0; i--) {
-      const d = Math.floor(a[i] / exp) % 10
-      output[count[d] - 1] = a[i]
-      count[d]--
+      const d = Math.floor((a[i] ?? 0) / exp) % 10
+      output[count[d]! - 1] = a[i]!
+      count[d]!--
       swp++
     }
-    for (let i = 0; i < n; i++) a[i] = output[i]
+    for (let i = 0; i < n; i++) a[i] = output[i]!
     yield ms(a, [], [], sorted, undefined, `Sau khi sắp xếp theo hàng ${digitName}`, 9, cmp, swp)
   }
 
@@ -755,7 +755,7 @@ function* bogoSortGen(arr: number[]): Generator<SortStep> {
   function isSorted(): boolean {
     for (let i = 0; i < n - 1; i++) {
       cmp++
-      if (a[i] > a[i + 1]) return false
+      if ((a[i] ?? 0) > (a[i + 1] ?? 0)) return false
     }
     return true
   }
@@ -763,7 +763,7 @@ function* bogoSortGen(arr: number[]): Generator<SortStep> {
   function shuffle() {
     for (let i = n - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
-      ;[a[i], a[j]] = [a[j], a[i]]
+      ;[a[i], a[j]] = [a[j]!, a[i]!]
       swp++
     }
   }

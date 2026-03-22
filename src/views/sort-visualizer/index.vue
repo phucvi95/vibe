@@ -4,7 +4,6 @@ import { algorithms, algorithmMap } from './algorithms'
 import type { SortStep, AlgorithmId, VisualizationMode, InputType, PivotStrategy } from './types'
 
 // ── State ──────────────────────────────────────────────────────────────────
-const isDark = ref(true)
 const soundEnabled = ref(false)
 const showLearn = ref(true)
 const vizMode = ref<VisualizationMode>('bar')
@@ -100,7 +99,7 @@ function generateArray(): number[] {
       for (let i = 0; i < swaps; i++) {
         const x = Math.floor(Math.random() * n)
         const y = Math.floor(Math.random() * n)
-        ;[a[x], a[y]] = [a[y], a[x]]
+        ;[a[x], a[y]] = [a[y]!, a[x]!]
       }
       return a
     }
@@ -280,23 +279,18 @@ function shuffle() {
 }
 
 // ── Canvas drawing ──────────────────────────────────────────────────────────
-function getColors(dark: boolean) {
+function getColors() {
   return {
-    default: dark ? '#60a5fa' : '#3b82f6',
-    comparing: '#fbbf24',
-    swapping: '#f87171',
-    sorted: '#34d399',
-    pivot: '#c084fc',
-    bg: dark ? '#111827' : '#f3f4f6',
+    default: '#38BDF8', // accent-sky
+    comparing: '#FFB830', // accent-amber
+    swapping: '#FF6B4A', // accent-coral
+    sorted: '#34d399', // green
+    pivot: '#FFB830', // accent-amber (no purple per design system)
+    bg: '#0F1923', // bg-deep
   }
 }
 
-function drawOnCanvas(
-  c: HTMLCanvasElement,
-  step: SortStep,
-  mode: VisualizationMode = 'bar',
-  dark = true,
-) {
+function drawOnCanvas(c: HTMLCanvasElement, step: SortStep, mode: VisualizationMode = 'bar') {
   const ctx = c.getContext('2d')
   if (!ctx) return
 
@@ -316,7 +310,7 @@ function drawOnCanvas(
   const comparingSet = new Set(comparing)
   const swappingSet = new Set(swapping)
   const sortedSet = new Set(sorted)
-  const colors = getColors(dark)
+  const colors = getColors()
 
   function getColor(i: number): string {
     if (i === pivot) return colors.pivot
@@ -332,14 +326,14 @@ function drawOnCanvas(
   if (mode === 'bar') {
     const bw = w / n
     for (let i = 0; i < n; i++) {
-      const bh = Math.max(1, (array[i] / max) * (h - 4))
+      const bh = Math.max(1, ((array[i] ?? 0) / max) * (h - 4))
       ctx.fillStyle = getColor(i)
       ctx.fillRect(i * bw, h - bh, Math.max(1, bw - (n > 80 ? 0 : 1)), bh)
     }
   } else if (mode === 'hue') {
     const bw = w / n
     for (let i = 0; i < n; i++) {
-      const hue = (array[i] / max) * 300
+      const hue = ((array[i] ?? 0) / max) * 300
       let lit = 50
       if (swappingSet.has(i)) lit = 75
       else if (comparingSet.has(i)) lit = 80
@@ -350,7 +344,7 @@ function drawOnCanvas(
     const r = Math.max(1.5, Math.min(6, (w / n) * 0.4))
     for (let i = 0; i < n; i++) {
       const x = (i + 0.5) * (w / n)
-      const y = h - 4 - (array[i] / max) * (h - 12)
+      const y = h - 4 - ((array[i] ?? 0) / max) * (h - 12)
       ctx.beginPath()
       ctx.arc(x, y, r, 0, Math.PI * 2)
       ctx.fillStyle = getColor(i)
@@ -375,14 +369,14 @@ function drawFrame() {
   if (!canvas.value) return
   const step = steps.value[currentStepIndex.value]
   if (!step) return
-  drawOnCanvas(canvas.value, step, vizMode.value, isDark.value)
+  drawOnCanvas(canvas.value, step, vizMode.value)
 }
 
 function drawRaceFrame(c: HTMLCanvasElement | null, stepsArr: SortStep[], idx: number) {
   if (!c) return
   const step = stepsArr[idx]
   if (!step) return
-  drawOnCanvas(c, step, 'bar', isDark.value)
+  drawOnCanvas(c, step, 'bar')
 }
 
 function handleResize() {
@@ -408,7 +402,7 @@ function playSound(step: SortStep) {
     const arr = step.array
     const max = Math.max(...arr) || 1
     const indices = step.swapping.length ? step.swapping : step.comparing
-    const val = arr[indices[0]] ?? 1
+    const val = arr[indices[0] ?? 0] ?? 1
     const freq = 180 + (val / max) * 880
 
     const osc = audioCtx.createOscillator()
@@ -435,7 +429,7 @@ async function playCompletionSound() {
       const gain = audioCtx!.createGain()
       osc.connect(gain)
       gain.connect(audioCtx!.destination)
-      osc.frequency.value = notes[i]
+      osc.frequency.value = notes[i] ?? 440
       gain.gain.setValueAtTime(0.1, audioCtx!.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx!.currentTime + 0.15)
       osc.start()
@@ -449,7 +443,6 @@ async function playCompletionSound() {
 watch(currentStepIndex, () => {
   if (isDone.value) playCompletionSound()
 })
-watch(isDark, drawFrame)
 watch(vizMode, drawFrame)
 watch(currentAlgoId, () => {
   stop()
@@ -526,104 +519,72 @@ const algoGroups = [
 </script>
 
 <template>
-  <div
-    class="flex flex-col min-h-screen font-mono text-sm transition-colors duration-200"
-    :class="isDark ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'"
-  >
+  <div class="flex flex-col min-h-screen bg-bg-deep text-text-primary text-sm">
     <!-- Header -->
     <header
-      class="sticky top-0 z-20 flex items-center justify-between px-4 py-2 border-b"
-      :class="isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'"
+      class="sticky top-0 z-20 flex items-center justify-between px-4 py-2 border-b bg-bg-surface border-border-default"
     >
       <div class="flex items-center gap-2">
         <a
           href="/"
-          class="text-xs px-2 py-1 rounded transition-colors"
-          :class="
-            isDark
-              ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-          "
+          class="text-xs px-2 py-1 border border-border-default bg-bg-elevated text-text-secondary transition hover:border-accent-coral hover:text-text-primary"
           >← Trang chủ</a
         >
-        <span class="text-gray-600">|</span>
-        <span class="font-bold text-base" :class="isDark ? 'text-blue-400' : 'text-blue-600'"
-          >Sort Visualizer</span
-        >
+        <span class="text-text-dim">|</span>
+        <span class="font-display font-bold text-base text-accent-sky">Sort Visualizer</span>
       </div>
       <div class="flex items-center gap-1">
         <button
           @click="showLearn = !showLearn"
-          class="px-2 py-1 rounded text-xs transition-colors"
-          :class="[
+          class="px-2 py-1 text-xs transition-colors"
+          :class="
             showLearn
-              ? isDark
-                ? 'bg-blue-600 text-white'
-                : 'bg-blue-500 text-white'
-              : isDark
-                ? 'text-gray-400 hover:bg-gray-800'
-                : 'text-gray-500 hover:bg-gray-100',
-          ]"
+              ? 'bg-accent-coral text-bg-deep'
+              : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+          "
           title="Chế độ học"
         >
           📖 Học
         </button>
         <button
           @click="raceMode = !raceMode"
-          class="px-2 py-1 rounded text-xs transition-colors"
-          :class="[
+          class="px-2 py-1 text-xs transition-colors"
+          :class="
             raceMode
-              ? 'bg-orange-500 text-white'
-              : isDark
-                ? 'text-gray-400 hover:bg-gray-800'
-                : 'text-gray-500 hover:bg-gray-100',
-          ]"
+              ? 'bg-accent-amber text-bg-deep'
+              : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+          "
           title="Race Mode"
         >
           ⚔️ Race
         </button>
         <button
           @click="soundEnabled = !soundEnabled"
-          class="px-2 py-1 rounded text-xs transition-colors"
-          :class="isDark ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-500 hover:bg-gray-100'"
+          class="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
           :title="soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'"
         >
           {{ soundEnabled ? '🔊' : '🔇' }}
-        </button>
-        <button
-          @click="isDark = !isDark"
-          class="px-2 py-1 rounded text-xs transition-colors"
-          :class="isDark ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-500 hover:bg-gray-100'"
-        >
-          {{ isDark ? '☀️' : '🌙' }}
         </button>
       </div>
     </header>
 
     <!-- Algorithm selector -->
     <div
-      class="px-3 py-2 border-b flex flex-wrap gap-1 items-center"
-      :class="isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'"
+      class="px-3 py-2 border-b flex flex-wrap gap-1 items-center bg-bg-surface border-border-default"
     >
       <template v-if="!raceMode">
         <template v-for="group in algoGroups" :key="group.label">
-          <span class="text-xs mr-1" :class="isDark ? 'text-gray-600' : 'text-gray-400'"
-            >{{ group.label }}:</span
-          >
+          <span class="text-xs mr-1 text-text-dim">{{ group.label }}:</span>
           <button
             v-for="id in group.ids"
             :key="id"
             @click="currentAlgoId = id"
-            class="px-2 py-0.5 rounded text-xs transition-all"
-            :class="[
+            class="px-2 py-0.5 text-xs transition-all border"
+            :class="
               currentAlgoId === id
-                ? isDark
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-500 text-white'
-                : isDark
-                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
-            ]"
+                ? 'bg-accent-coral text-bg-deep border-accent-coral'
+                : 'bg-bg-elevated text-text-secondary border-border-default hover:border-accent-coral hover:text-text-primary'
+            "
           >
             {{ algorithmMap.get(id)?.name.replace(' Sort', '') }}
           </button>
@@ -631,43 +592,31 @@ const algoGroups = [
         </template>
       </template>
       <template v-else>
-        <span class="text-xs font-bold text-orange-400">⚔️ Race Mode — Chọn 2 thuật toán:</span>
+        <span class="text-xs font-display font-bold text-accent-amber"
+          >⚔️ Race Mode — Chọn 2 thuật toán:</span
+        >
         <select
           v-model="raceAlgo1"
-          class="ml-2 px-2 py-0.5 rounded text-xs"
-          :class="
-            isDark
-              ? 'bg-gray-800 text-white border border-gray-700'
-              : 'bg-white border border-gray-300'
-          "
+          class="ml-2 px-2 py-0.5 text-xs bg-bg-elevated text-text-primary border border-border-default"
           @change="initRace"
         >
           <option v-for="a in algorithms" :key="a.id" :value="a.id">{{ a.name }}</option>
         </select>
-        <span class="text-orange-400">vs</span>
+        <span class="text-accent-amber">vs</span>
         <select
           v-model="raceAlgo2"
-          class="px-2 py-0.5 rounded text-xs"
-          :class="
-            isDark
-              ? 'bg-gray-800 text-white border border-gray-700'
-              : 'bg-white border border-gray-300'
-          "
+          class="px-2 py-0.5 text-xs bg-bg-elevated text-text-primary border border-border-default"
           @change="initRace"
         >
           <option v-for="a in algorithms" :key="a.id" :value="a.id">{{ a.name }}</option>
         </select>
         <button
           @click="initRace"
-          class="px-2 py-0.5 rounded text-xs bg-orange-500 text-white hover:bg-orange-400 transition-colors"
+          class="px-2 py-0.5 text-xs bg-accent-amber text-bg-deep hover:bg-accent-amber/80 transition-colors"
         >
           🔀 Mảng mới
         </button>
-        <span
-          v-if="raceWinner"
-          class="ml-2 font-bold"
-          :class="raceWinner === 1 ? 'text-yellow-400' : 'text-blue-400'"
-        >
+        <span v-if="raceWinner" class="ml-2 font-display font-bold text-accent-amber">
           🏆
           {{
             raceWinner === 1 ? algorithmMap.get(raceAlgo1)?.name : algorithmMap.get(raceAlgo2)?.name
@@ -681,12 +630,9 @@ const algoGroups = [
     <div class="flex-1 flex min-h-0">
       <!-- Left: Visualization + controls -->
       <div class="flex-1 flex flex-col p-3 gap-2 min-h-0">
-        <!-- Viz mode + pivot + quick options (non-race) -->
+        <!-- Viz mode + pivot + options (non-race) -->
         <div v-if="!raceMode" class="flex flex-wrap items-center gap-2">
-          <div
-            class="flex rounded overflow-hidden border"
-            :class="isDark ? 'border-gray-700' : 'border-gray-300'"
-          >
+          <div class="flex border border-border-default overflow-hidden">
             <button
               v-for="m in [
                 ['bar', '📊 Bar'],
@@ -696,30 +642,21 @@ const algoGroups = [
               :key="m[0]"
               @click="vizMode = m[0]"
               class="px-2 py-0.5 text-xs transition-colors"
-              :class="[
+              :class="
                 vizMode === m[0]
-                  ? isDark
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-blue-500 text-white'
-                  : isDark
-                    ? 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    : 'bg-white text-gray-500 hover:bg-gray-100',
-              ]"
+                  ? 'bg-accent-sky text-bg-deep'
+                  : 'bg-bg-elevated text-text-secondary hover:text-text-primary'
+              "
             >
               {{ m[1] }}
             </button>
           </div>
 
           <template v-if="currentAlgoId === 'quick'">
-            <span class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Pivot:</span>
+            <span class="text-xs text-text-dim">Pivot:</span>
             <select
               v-model="pivotStrategy"
-              class="px-2 py-0.5 rounded text-xs"
-              :class="
-                isDark
-                  ? 'bg-gray-800 text-white border border-gray-700'
-                  : 'bg-white border border-gray-300'
-              "
+              class="px-2 py-0.5 text-xs bg-bg-elevated text-text-primary border border-border-default"
               @change="initSort"
             >
               <option value="last">Last</option>
@@ -730,15 +667,10 @@ const algoGroups = [
           </template>
 
           <div class="ml-auto flex items-center gap-2">
-            <span class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Input:</span>
+            <span class="text-xs text-text-dim">Input:</span>
             <select
               v-model="inputType"
-              class="px-2 py-0.5 rounded text-xs"
-              :class="
-                isDark
-                  ? 'bg-gray-800 text-white border border-gray-700'
-                  : 'bg-white border border-gray-300'
-              "
+              class="px-2 py-0.5 text-xs bg-bg-elevated text-text-primary border border-border-default"
             >
               <option value="random">Ngẫu nhiên</option>
               <option value="nearly-sorted">Gần đã sort</option>
@@ -747,12 +679,7 @@ const algoGroups = [
             </select>
             <button
               @click="showCustomInput = !showCustomInput"
-              class="px-2 py-0.5 rounded text-xs transition-colors"
-              :class="
-                isDark
-                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              "
+              class="px-2 py-0.5 text-xs bg-bg-elevated text-text-secondary border border-border-default hover:border-accent-coral hover:text-text-primary transition-colors"
             >
               ✎ Custom
             </button>
@@ -764,16 +691,11 @@ const algoGroups = [
           <input
             v-model="customInput"
             placeholder="Nhập số cách nhau bởi dấu phẩy hoặc space: 5, 3, 8, 1, 9..."
-            class="flex-1 px-2 py-1 rounded text-xs border"
-            :class="
-              isDark
-                ? 'bg-gray-800 text-white border-gray-700 placeholder-gray-600'
-                : 'bg-white border-gray-300 placeholder-gray-400'
-            "
+            class="flex-1 px-2 py-1 text-xs border bg-bg-elevated text-text-primary border-border-default placeholder-text-dim"
           />
           <button
             @click="initSort"
-            class="px-3 py-1 rounded text-xs bg-blue-600 text-white hover:bg-blue-500 transition-colors"
+            class="px-3 py-1 text-xs bg-accent-coral text-bg-deep hover:bg-accent-coral/80 transition-colors"
           >
             Sort!
           </button>
@@ -782,46 +704,34 @@ const algoGroups = [
         <!-- Canvas visualization -->
         <div
           ref="vizContainer"
-          class="relative rounded-lg overflow-hidden border flex-shrink-0"
-          :class="isDark ? 'bg-gray-900 border-gray-800' : 'bg-gray-100 border-gray-300'"
+          class="relative overflow-hidden border flex-shrink-0 bg-bg-surface border-border-default"
           :style="{ height: raceMode ? 'auto' : '280px' }"
         >
-          <!-- Normal mode -->
           <canvas v-if="!raceMode" ref="canvas" class="w-full h-full" style="height: 280px" />
 
-          <!-- Race mode: two canvases -->
+          <!-- Race mode -->
           <div v-if="raceMode" class="flex gap-2 p-2" style="height: 300px">
             <div class="flex-1 flex flex-col gap-1">
               <div class="flex items-center justify-between">
                 <span
-                  class="text-xs font-bold"
-                  :class="
-                    raceWinner === 1
-                      ? 'text-yellow-400'
-                      : isDark
-                        ? 'text-blue-400'
-                        : 'text-blue-600'
-                  "
+                  class="text-xs font-display font-bold"
+                  :class="raceWinner === 1 ? 'text-accent-amber' : 'text-accent-sky'"
                 >
                   {{ raceWinner === 1 ? '🏆 ' : '' }}{{ algorithmMap.get(raceAlgo1)?.name }}
                 </span>
-                <span class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-                  {{ raceStep1?.comparisons ?? 0 }} cmp / {{ raceStep1?.swaps ?? 0 }} swp
-                </span>
+                <span class="text-xs text-text-dim"
+                  >{{ raceStep1?.comparisons ?? 0 }} cmp / {{ raceStep1?.swaps ?? 0 }} swp</span
+                >
               </div>
               <div
                 id="race-panel-1"
-                class="flex-1 rounded overflow-hidden border"
-                :class="isDark ? 'bg-gray-950 border-gray-700' : 'bg-gray-50 border-gray-300'"
+                class="flex-1 overflow-hidden border bg-bg-deep border-border-default"
               >
                 <canvas id="race-canvas-1" ref="raceCanvas1" class="w-full h-full" />
               </div>
-              <div
-                class="h-1 rounded-full overflow-hidden"
-                :class="isDark ? 'bg-gray-800' : 'bg-gray-300'"
-              >
+              <div class="h-1 overflow-hidden bg-bg-elevated">
                 <div
-                  class="h-full bg-blue-500 transition-all"
+                  class="h-full bg-accent-sky transition-all"
                   :style="{ width: raceProg1 + '%' }"
                 />
               </div>
@@ -829,34 +739,24 @@ const algoGroups = [
             <div class="flex-1 flex flex-col gap-1">
               <div class="flex items-center justify-between">
                 <span
-                  class="text-xs font-bold"
-                  :class="
-                    raceWinner === 2
-                      ? 'text-yellow-400'
-                      : isDark
-                        ? 'text-orange-400'
-                        : 'text-orange-600'
-                  "
+                  class="text-xs font-display font-bold"
+                  :class="raceWinner === 2 ? 'text-accent-amber' : 'text-accent-coral'"
                 >
                   {{ raceWinner === 2 ? '🏆 ' : '' }}{{ algorithmMap.get(raceAlgo2)?.name }}
                 </span>
-                <span class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-                  {{ raceStep2?.comparisons ?? 0 }} cmp / {{ raceStep2?.swaps ?? 0 }} swp
-                </span>
+                <span class="text-xs text-text-dim"
+                  >{{ raceStep2?.comparisons ?? 0 }} cmp / {{ raceStep2?.swaps ?? 0 }} swp</span
+                >
               </div>
               <div
                 id="race-panel-2"
-                class="flex-1 rounded overflow-hidden border"
-                :class="isDark ? 'bg-gray-950 border-gray-700' : 'bg-gray-50 border-gray-300'"
+                class="flex-1 overflow-hidden border bg-bg-deep border-border-default"
               >
                 <canvas id="race-canvas-2" ref="raceCanvas2" class="w-full h-full" />
               </div>
-              <div
-                class="h-1 rounded-full overflow-hidden"
-                :class="isDark ? 'bg-gray-800' : 'bg-gray-300'"
-              >
+              <div class="h-1 overflow-hidden bg-bg-elevated">
                 <div
-                  class="h-full bg-orange-500 transition-all"
+                  class="h-full bg-accent-coral transition-all"
                   :style="{ width: raceProg2 + '%' }"
                 />
               </div>
@@ -871,29 +771,25 @@ const algoGroups = [
               v-if="!raceMode"
               @click="stepBack"
               :disabled="currentStepIndex === 0"
-              class="px-2 py-1 rounded text-base transition-colors disabled:opacity-30"
-              :class="isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'"
+              class="px-2 py-1 text-base bg-bg-elevated text-text-secondary border border-border-default hover:border-accent-coral hover:text-text-primary transition-colors disabled:opacity-30"
               title="Bước trước"
             >
               ⏮
             </button>
             <button
               @click="togglePlay"
-              class="px-4 py-1 rounded text-base font-bold transition-colors"
+              class="px-4 py-1 text-base font-display font-bold transition-colors"
               :class="
                 isPlaying
-                  ? 'bg-yellow-500 text-black hover:bg-yellow-400'
-                  : isDark
-                    ? 'bg-blue-600 text-white hover:bg-blue-500'
-                    : 'bg-blue-500 text-white hover:bg-blue-400'
+                  ? 'bg-accent-amber text-bg-deep'
+                  : 'bg-accent-coral text-bg-deep hover:bg-accent-coral/80'
               "
             >
               {{ isPlaying ? '⏸ Dừng' : isDone ? '↺ Chạy lại' : '▶ Chạy' }}
             </button>
             <button
               @click="stepForward"
-              class="px-2 py-1 rounded text-base transition-colors"
-              :class="isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'"
+              class="px-2 py-1 text-base bg-bg-elevated text-text-secondary border border-border-default hover:border-accent-coral hover:text-text-primary transition-colors"
               title="Bước tiếp"
             >
               ⏭
@@ -902,12 +798,7 @@ const algoGroups = [
 
           <button
             @click="raceMode ? initRace() : shuffle()"
-            class="px-3 py-1 rounded text-xs transition-colors"
-            :class="
-              isDark
-                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            "
+            class="px-3 py-1 text-xs bg-bg-elevated text-text-secondary border border-border-default hover:border-accent-coral hover:text-text-primary transition-colors"
           >
             🔀 Mảng mới
           </button>
@@ -915,32 +806,25 @@ const algoGroups = [
           <button
             v-if="!raceMode"
             @click="initSort"
-            class="px-3 py-1 rounded text-xs transition-colors"
-            :class="
-              isDark
-                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            "
+            class="px-3 py-1 text-xs bg-bg-elevated text-text-secondary border border-border-default hover:border-accent-coral hover:text-text-primary transition-colors"
           >
             ↺ Reset
           </button>
 
           <div class="flex items-center gap-2 ml-auto">
-            <span class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Tốc độ:</span>
+            <span class="text-xs text-text-dim">Tốc độ:</span>
             <input
               type="range"
               v-model.number="speed"
               min="1"
               max="10"
-              class="w-20 accent-blue-500"
+              class="w-20 accent-[#FF6B4A]"
             />
-            <span class="text-xs w-16" :class="isDark ? 'text-gray-400' : 'text-gray-600'">{{
-              speedLabel
-            }}</span>
+            <span class="text-xs w-16 text-text-secondary">{{ speedLabel }}</span>
           </div>
 
           <div class="flex items-center gap-2">
-            <span class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+            <span class="text-xs text-text-dim">
               {{ !raceMode && currentAlgoId === 'bogo' ? 'Phần tử (≤8):' : 'Số phần tử:' }}
             </span>
             <input
@@ -954,9 +838,9 @@ const algoGroups = [
                     ? 150
                     : 200
               "
-              class="w-20 accent-blue-500"
+              class="w-20 accent-[#FF6B4A]"
             />
-            <span class="text-xs w-8" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+            <span class="text-xs w-8 text-text-secondary">
               {{ !raceMode && currentAlgoId === 'bogo' ? Math.min(arraySize, 8) : arraySize }}
             </span>
           </div>
@@ -964,68 +848,56 @@ const algoGroups = [
 
         <!-- Stats (non-race) -->
         <div v-if="!raceMode" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <div
-            class="rounded px-3 py-1.5 text-center"
-            :class="isDark ? 'bg-gray-800' : 'bg-gray-200'"
-          >
-            <div class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-500'">So sánh</div>
-            <div class="text-base font-bold text-yellow-400">
+          <div class="bg-bg-elevated px-3 py-1.5 text-center">
+            <div class="text-xs text-text-dim">So sánh</div>
+            <div class="text-base font-bold text-accent-amber">
               {{ learnStep.comparisons.toLocaleString() }}
             </div>
           </div>
-          <div
-            class="rounded px-3 py-1.5 text-center"
-            :class="isDark ? 'bg-gray-800' : 'bg-gray-200'"
-          >
-            <div class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-500'">Hoán đổi</div>
-            <div class="text-base font-bold text-red-400">
+          <div class="bg-bg-elevated px-3 py-1.5 text-center">
+            <div class="text-xs text-text-dim">Hoán đổi</div>
+            <div class="text-base font-bold text-accent-coral">
               {{ learnStep.swaps.toLocaleString() }}
             </div>
           </div>
-          <div
-            class="rounded px-3 py-1.5 text-center"
-            :class="isDark ? 'bg-gray-800' : 'bg-gray-200'"
-          >
-            <div class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-500'">Thời gian</div>
-            <div class="text-base font-bold text-green-400">{{ formatMs(elapsedMs) }}</div>
+          <div class="bg-bg-elevated px-3 py-1.5 text-center">
+            <div class="text-xs text-text-dim">Thời gian</div>
+            <div class="text-base font-bold text-accent-sky">{{ formatMs(elapsedMs) }}</div>
           </div>
-          <div
-            class="rounded px-3 py-1.5 text-center"
-            :class="isDark ? 'bg-gray-800' : 'bg-gray-200'"
-          >
-            <div class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-500'">Bước</div>
-            <div class="text-base font-bold text-blue-400">
+          <div class="bg-bg-elevated px-3 py-1.5 text-center">
+            <div class="text-xs text-text-dim">Bước</div>
+            <div class="text-base font-bold text-text-primary">
               {{ currentStepIndex }}/{{ steps.length }}
             </div>
           </div>
         </div>
 
         <!-- Progress bar (non-race) -->
-        <div
-          v-if="!raceMode"
-          class="relative h-1.5 rounded-full overflow-hidden"
-          :class="isDark ? 'bg-gray-800' : 'bg-gray-200'"
-        >
+        <div v-if="!raceMode" class="relative h-1.5 overflow-hidden bg-bg-elevated">
           <div
-            class="h-full rounded-full transition-all duration-100"
-            :class="isDone ? 'bg-green-500' : 'bg-blue-500'"
+            class="h-full transition-all duration-100"
+            :class="isDone ? 'bg-accent-sky' : 'bg-accent-coral'"
             :style="{ width: progress + '%' }"
           />
         </div>
 
         <!-- Color legend -->
-        <div
-          class="flex flex-wrap gap-3 text-xs"
-          :class="isDark ? 'text-gray-500' : 'text-gray-500'"
-        >
-          <span><span class="inline-block w-3 h-3 rounded-sm bg-blue-400 mr-1" />Chưa xét</span>
+        <div class="flex flex-wrap gap-3 text-xs text-text-dim">
           <span
-            ><span class="inline-block w-3 h-3 rounded-sm bg-yellow-400 mr-1" />Đang so sánh</span
+            ><span class="inline-block w-3 h-3 mr-1" style="background: #38bdf8" />Chưa xét</span
           >
-          <span><span class="inline-block w-3 h-3 rounded-sm bg-red-400 mr-1" />Đang swap</span>
-          <span><span class="inline-block w-3 h-3 rounded-sm bg-green-400 mr-1" />Đã sắp xếp</span>
+          <span
+            ><span class="inline-block w-3 h-3 mr-1" style="background: #ffb830" />Đang so
+            sánh</span
+          >
+          <span
+            ><span class="inline-block w-3 h-3 mr-1" style="background: #ff6b4a" />Đang swap</span
+          >
+          <span
+            ><span class="inline-block w-3 h-3 mr-1" style="background: #34d399" />Đã sắp xếp</span
+          >
           <span v-if="currentAlgoId === 'quick'"
-            ><span class="inline-block w-3 h-3 rounded-sm bg-purple-400 mr-1" />Pivot</span
+            ><span class="inline-block w-3 h-3 mr-1" style="background: #ffb830" />Pivot</span
           >
         </div>
       </div>
@@ -1033,49 +905,33 @@ const algoGroups = [
       <!-- Right: Learn panel -->
       <div
         v-if="showLearn && !raceMode"
-        class="w-72 xl:w-80 border-l flex flex-col gap-3 p-3 overflow-y-auto hidden md:flex"
-        :class="isDark ? 'border-gray-800 bg-gray-900/30' : 'border-gray-200 bg-gray-50'"
+        class="w-72 xl:w-80 border-l border-border-default flex flex-col gap-3 p-3 overflow-y-auto hidden md:flex bg-bg-surface"
         style="max-height: calc(100vh - 100px)"
       >
         <!-- Step description -->
-        <div
-          class="rounded-lg p-3 border min-h-12"
-          :class="isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
-        >
-          <div class="text-xs font-bold mb-1 text-blue-400">💬 Bước hiện tại</div>
-          <div class="text-xs leading-relaxed" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
+        <div class="p-3 border border-border-default bg-bg-elevated min-h-12">
+          <div class="text-xs font-bold mb-1 text-accent-sky">💬 Bước hiện tại</div>
+          <div class="text-xs leading-relaxed text-text-secondary">
             {{ learnStep.description || 'Nhấn ▶ để bắt đầu' }}
           </div>
         </div>
 
         <!-- Pseudocode -->
-        <div
-          class="rounded-lg border overflow-hidden"
-          :class="isDark ? 'border-gray-700' : 'border-gray-200'"
-        >
+        <div class="border border-border-default overflow-hidden">
           <div
-            class="px-3 py-1.5 text-xs font-bold border-b"
-            :class="
-              isDark
-                ? 'bg-gray-800 border-gray-700 text-gray-400'
-                : 'bg-gray-100 border-gray-200 text-gray-600'
-            "
+            class="px-3 py-1.5 text-xs font-bold border-b border-border-default bg-bg-elevated text-text-dim"
           >
             📝 Pseudo-code
           </div>
-          <div :class="isDark ? 'bg-gray-950' : 'bg-white'">
+          <div class="bg-bg-deep">
             <div
               v-for="(line, idx) in currentAlgo.pseudoCode"
               :key="idx"
               class="px-3 py-0.5 text-xs font-mono transition-colors"
               :class="[
                 learnStep.pseudoCodeLine === idx
-                  ? isDark
-                    ? 'bg-blue-900/60 text-blue-200 border-l-2 border-blue-400'
-                    : 'bg-blue-50 text-blue-800 border-l-2 border-blue-400'
-                  : isDark
-                    ? 'text-gray-500'
-                    : 'text-gray-400',
+                  ? 'bg-accent-sky/10 text-accent-sky border-l-2 border-accent-sky'
+                  : 'text-text-dim',
                 line === '' ? 'py-0' : '',
               ]"
             >
@@ -1085,52 +941,38 @@ const algoGroups = [
         </div>
 
         <!-- Algorithm info -->
-        <div
-          class="rounded-lg p-3 border"
-          :class="isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
-        >
-          <div class="text-xs font-bold mb-2 text-purple-400">ℹ️ {{ currentAlgo.name }}</div>
-          <p
-            class="text-xs leading-relaxed mb-2"
-            :class="isDark ? 'text-gray-400' : 'text-gray-600'"
-          >
+        <div class="p-3 border border-border-default bg-bg-elevated">
+          <div class="text-xs font-bold mb-2 text-accent-amber">ℹ️ {{ currentAlgo.name }}</div>
+          <p class="text-xs leading-relaxed mb-2 text-text-secondary">
             {{ currentAlgo.description }}
           </p>
           <div class="grid grid-cols-2 gap-1 text-xs">
-            <div :class="isDark ? 'text-gray-500' : 'text-gray-400'">Best:</div>
-            <div class="text-green-400 font-mono">{{ currentAlgo.timeComplexity.best }}</div>
-            <div :class="isDark ? 'text-gray-500' : 'text-gray-400'">Average:</div>
-            <div class="text-yellow-400 font-mono">{{ currentAlgo.timeComplexity.average }}</div>
-            <div :class="isDark ? 'text-gray-500' : 'text-gray-400'">Worst:</div>
-            <div class="text-red-400 font-mono">{{ currentAlgo.timeComplexity.worst }}</div>
-            <div :class="isDark ? 'text-gray-500' : 'text-gray-400'">Space:</div>
-            <div class="text-blue-400 font-mono">{{ currentAlgo.spaceComplexity }}</div>
-            <div :class="isDark ? 'text-gray-500' : 'text-gray-400'">Ổn định:</div>
-            <div :class="currentAlgo.stable ? 'text-green-400' : 'text-red-400'">
+            <div class="text-text-dim">Best:</div>
+            <div class="text-accent-sky font-mono">{{ currentAlgo.timeComplexity.best }}</div>
+            <div class="text-text-dim">Average:</div>
+            <div class="text-accent-amber font-mono">{{ currentAlgo.timeComplexity.average }}</div>
+            <div class="text-text-dim">Worst:</div>
+            <div class="text-accent-coral font-mono">{{ currentAlgo.timeComplexity.worst }}</div>
+            <div class="text-text-dim">Space:</div>
+            <div class="text-text-secondary font-mono">{{ currentAlgo.spaceComplexity }}</div>
+            <div class="text-text-dim">Ổn định:</div>
+            <div :class="currentAlgo.stable ? 'text-accent-sky' : 'text-accent-coral'">
               {{ currentAlgo.stable ? '✓ Có' : '✗ Không' }}
             </div>
           </div>
         </div>
 
         <!-- All algorithms complexity table -->
-        <div
-          class="rounded-lg border overflow-hidden"
-          :class="isDark ? 'border-gray-700' : 'border-gray-200'"
-        >
+        <div class="border border-border-default overflow-hidden">
           <div
-            class="px-3 py-1.5 text-xs font-bold border-b"
-            :class="
-              isDark
-                ? 'bg-gray-800 border-gray-700 text-gray-400'
-                : 'bg-gray-100 border-gray-200 text-gray-600'
-            "
+            class="px-3 py-1.5 text-xs font-bold border-b border-border-default bg-bg-elevated text-text-dim"
           >
             📊 So sánh độ phức tạp
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead>
-                <tr :class="isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-50 text-gray-400'">
+                <tr class="bg-bg-elevated text-text-dim">
                   <th class="px-2 py-1 text-left font-normal">Thuật toán</th>
                   <th class="px-2 py-1 text-right font-normal">Avg</th>
                   <th class="px-2 py-1 text-right font-normal">Space</th>
@@ -1140,24 +982,19 @@ const algoGroups = [
                 <tr
                   v-for="algo in algorithms"
                   :key="algo.id"
-                  class="border-t transition-colors cursor-pointer"
-                  :class="[
-                    isDark ? 'border-gray-800' : 'border-gray-100',
+                  class="border-t border-border-default transition-colors cursor-pointer"
+                  :class="
                     currentAlgoId === algo.id
-                      ? isDark
-                        ? 'bg-blue-900/30 text-blue-300'
-                        : 'bg-blue-50 text-blue-700'
-                      : isDark
-                        ? 'text-gray-400 hover:bg-gray-800'
-                        : 'text-gray-500 hover:bg-gray-50',
-                  ]"
+                      ? 'bg-accent-sky/10 text-accent-sky'
+                      : 'text-text-dim hover:bg-bg-elevated'
+                  "
                   @click="currentAlgoId = algo.id"
                 >
                   <td class="px-2 py-0.5">{{ algo.name }}</td>
-                  <td class="px-2 py-0.5 text-right font-mono text-yellow-400/80">
+                  <td class="px-2 py-0.5 text-right font-mono text-accent-amber/80">
                     {{ algo.timeComplexity.average }}
                   </td>
-                  <td class="px-2 py-0.5 text-right font-mono text-blue-400/80">
+                  <td class="px-2 py-0.5 text-right font-mono text-text-secondary/80">
                     {{ algo.spaceComplexity }}
                   </td>
                 </tr>
@@ -1171,33 +1008,24 @@ const algoGroups = [
     <!-- Mobile learn panel -->
     <div
       v-if="showLearn && !raceMode"
-      class="md:hidden border-t p-3 space-y-3"
-      :class="isDark ? 'border-gray-800 bg-gray-900/30' : 'border-gray-200'"
+      class="md:hidden border-t border-border-default bg-bg-surface p-3 space-y-3"
     >
-      <div class="text-xs font-bold text-blue-400">
+      <div class="text-xs font-bold text-accent-sky">
         💬 {{ learnStep.description || 'Nhấn ▶ để bắt đầu' }}
       </div>
-      <div
-        class="rounded p-2 border text-xs"
-        :class="isDark ? 'bg-gray-950 border-gray-700' : 'bg-white border-gray-200'"
-      >
-        <div class="font-bold mb-1" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
-          {{ currentAlgo.name }}
-        </div>
-        <div
-          class="grid grid-cols-2 gap-x-4 gap-y-0.5"
-          :class="isDark ? 'text-gray-500' : 'text-gray-400'"
-        >
+      <div class="p-2 border border-border-default bg-bg-elevated text-xs">
+        <div class="font-bold mb-1 text-text-secondary">{{ currentAlgo.name }}</div>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-text-dim">
           <span
             >Avg:
-            <span class="text-yellow-400">{{ currentAlgo.timeComplexity.average }}</span></span
+            <span class="text-accent-amber">{{ currentAlgo.timeComplexity.average }}</span></span
           >
           <span
-            >Space: <span class="text-blue-400">{{ currentAlgo.spaceComplexity }}</span></span
+            >Space: <span class="text-text-secondary">{{ currentAlgo.spaceComplexity }}</span></span
           >
           <span
             >Ổn định:
-            <span :class="currentAlgo.stable ? 'text-green-400' : 'text-red-400'">{{
+            <span :class="currentAlgo.stable ? 'text-accent-sky' : 'text-accent-coral'">{{
               currentAlgo.stable ? 'Có' : 'Không'
             }}</span></span
           >
