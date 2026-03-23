@@ -525,11 +525,12 @@ const algoGroups = [
       class="sticky top-0 z-20 flex items-center justify-between px-4 py-2 border-b bg-bg-surface border-border-default"
     >
       <div class="flex items-center gap-2">
-        <a
-          href="/"
+        <RouterLink
+          to="/"
           class="text-xs px-2 py-1 border border-border-default bg-bg-elevated text-text-secondary transition hover:border-accent-coral hover:text-text-primary"
-          >← Trang chủ</a
         >
+          ← Trang chủ
+        </RouterLink>
         <span class="text-text-dim">|</span>
         <span class="font-display font-bold text-base text-accent-sky">Sort Visualizer</span>
       </div>
